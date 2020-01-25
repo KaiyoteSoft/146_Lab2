@@ -1,0 +1,313 @@
+---
+title: 'Lab 2: Plotting'
+author: "Kai Oda"
+date: "January 17, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+knitr::opts_knit$set("~/Biology/146/Lab 2")
+```
+
+# 1. Setup
+
+All of the datasets are available in the Lab 2 folder on Gauchospace. They can also be accessed using the abd package.
+
+```{r message=FALSE, warning=FALSE}
+
+# install.packages("abd")
+library(abd) # dataset is available from this package
+library(ggplot2)
+library(ggridges)
+library(car)
+
+```
+
+# 2. Plotting in R
+
+There are two different approaches to plotting in R: 1. Using the base package, and 2. Using ggplot2. While the base package is useful for making quick plots, ggplot makes it very easy to make attractive plots that are publication quality.
+
+We're going to use both of these methods in this class. There are countless online resources with cool plots and code that you can easily take and adapt for your needs. Check out some of the resources at:
+http://rgraphgallery.blogspot.com/
+https://www.r-graph-gallery.com/index.html
+
+
+## 2.1 Plotting Functions
+### 2.1.a Base R
+
+1. plot(): plot x and y against each other
+2. hist(): Make a histogram of your data
+3. scatterplot(): Make a scatterplot of x and y
+4. abline(): Add a straight line to your current plot
+5. lines(): Add more lines/data to your current plot
+6. curve(): Plot a function over  some range
+7. boxplot(): make a boxplot to compare different groups of your data.
+8. densityPlot(): fir a density kernel to your data
+9. pit(): Make a pie chart
+10. barplot(): Make a bargraph
+11. mosaicplot(): Make a mosaic plot.
+
+### 2.1.b ggplot
+
+ggplot works by first setting up an empty plot, and then gradually adding in layers of information.
+
+1. ggplot(data, aes(x,y))+ This is the base information for setting up a ggplot. You first specify the dataset, then define the aesthetics (aes) for x and y.
+2. geom_point(): add points
+3. geom_line(): add lines that connect consecutive points
+4. geom_smooth(): add a fitted line to the points --> Density plot 
+5. geom_hist(): add a histogram
+6. goem_col(): makes bar chart with heights of the bars to represent values in the data
+7. geom_density(): add a density curve
+8. geom_violin(): add violins to your plot10
+9. geom_boxplot(): add boxplots
+10. geom_polygon(): add a filled shape
+11. geom_errorbar(): add errorbars to estimates
+.... and many more
+
+
+## 2.2. Plotting examples
+
+We're going to go through some plots that you'd use for exploring your data. Remember, we use plots for two main purposes: 1. for exploring our data (often referred to as exploratory data analysis, or EDA for short), and 2. for communicating results.
+ 
+
+### 2.2.a Scatterplot
+
+Reproducing some figures given in our books, let's start with figure 2.5-1: we are trying to determine whether the ornamentation of a father guppy correlates to the attractiveness of his son.
+
+```{r}
+# Dataset should already be in folder because we installed the abd package 
+#head prints out the first six rows of the dataset 
+head(Guppies)
+
+# prints out the dataset
+View(Guppies)
+
+#structure of the data
+str(Guppies)
+
+#Basic statistical data concerning dataset
+summary(Guppies)
+
+# two continuous numerical variables
+
+```
+
+Making a scatterplot using base R and ggplot:
+
+```{r}
+
+# plot(X VAR, Y VAR, xlab="X LABEL", ylab="YLABEL", color="COLOR", pch=DOT_SIZE, ylim=c(MIN VALUE, MAX VALUE))
+## ylim = Y limitation (axis scale)
+plot(Guppies$father.ornament, Guppies$son.attract, xlab="Father's ornamentation", ylab="Son's Attractiveness", col="blue", pch=2, ylim=c(-0.5, 1.5))
+
+
+# ggplot(DATAFRAMENAME, aes(x=X_VAR, y=Y_VAR))+
+## geom_point = scatterplot+
+## scale_y_continous --> Sets the scale of y axis 
+ggplot(Guppies, aes(x=father.ornament, y=son.attract))+
+  geom_point(col="black", size=2)+
+  scale_y_continuous(limits=c(-0.5,1.5))+
+  labs(y="Son's Attractiveness",x="Father's Ornamentation")+
+  theme_classic()
+
+# ?mean
+# ?apply
+
+```
+
+Play with the code for both of these plots to see if you can figure out how to change the size, shape, and color of the plotting points.
+
+
+> Write a sentence to describe what we learn from this plot.
+
+
+### 2.2.b CDF plots
+
+Now let's make a cumulative density plot
+Shows where data is clustered
+
+```{r}
+#View first six lines of data
+head(DesertBirds)
+#Species column = Factor variable, count column = integer 
+str(DesertBirds)
+summary(DesertBirds)
+View(DesertBirds)
+
+#rnorm generates random normal distribution 
+## length(DesertBirds$count) -> Number of rows in the DesertBirds dataset
+norm_data <- rnorm(length(DesertBirds$count), mean=mean(DesertBirds$count), sd=sd(DesertBirds$count))
+#?rnorm
+
+head(norm_data)
+head(DesertBirds$count)
+
+```
+
+> Q. What did we just do with this function?
+
+
+```{r}
+
+# make a cdf based on the data
+
+emp_cdf <- ecdf(DesertBirds$count)
+
+# make a cdf of the normal sample
+
+norm_cdf <- ecdf(norm_data)
+
+# plot
+
+plot(emp_cdf, col="red", main="CDF of Bird Counts Compared to Normal Distribution", 
+     xlab="Count", ylab="Cumulative relative frequency")+
+  # Use lines to add more lines to the given plot
+  lines(norm_cdf)
+# add a legend
+  legend(400, .2, c("Birds", "Normal Distribution"), col=c("red", "black"), pch=c(19,19))
+
+```
+
+> Q. What can you learn from this plot about the distribution of desert bird counts?
+
+
+Another way to compare the distribution of your data to a normal distribution is to use the qqnorm() function. Normal data should be in line with the qqline drawn.
+
+```{r}
+## Quantile-quantile > Plots density of points by expected density of points 
+#Expect normal distribution to follow 1-1 line 
+qqnorm(DesertBirds$count)
+qqline(DesertBirds$count)
+
+
+```
+
+### 2.2.c Line plots
+
+If you have a time-series dataset, a line plot is a good way to visualize it. We can use the lynx data as an example:
+
+```{r}
+
+head(Lynx)
+str(Lynx)
+summary(Lynx)
+
+plot(Lynx$year, Lynx$pelts, pch=19, xlab="Year", ylab="Number of Pelts")+
+  lines(Lynx$year, Lynx$pelts)
+
+ggplot(Lynx, aes(x=year, y=pelts))+
+  geom_point(color="purple", alpha=0.8)+
+  geom_line(color="blue", alpha=0.5)+
+  theme_classic()
+
+
+```
+
+
+# 3. Visualizing many variables
+
+We're going to use the iris dataset here. We want to look at the distribution of different flower measurements across several different iris species.
+
+```{r}
+
+head(iris)
+str(iris)
+summary(iris)
+View(iris)
+
+iris$Petal.Width <- iris$Petal.Width + 2
+str(iris)
+iris$ratio <- iris$Sepal.Length/iris$Sepal.Width
+
+# first, let's plot sepal and petal length and add a linear model line
+# geom_smooth plots a confidence interval for the line 
+
+ggplot(iris, aes(x = Sepal.Length, y = Petal.Length))+
+  geom_point(col="red", size=2)+
+  geom_smooth(method="lm")
+
+# now compare the distribution of sepal lengths across the different iris species
+##ggridges plots a series of density plots 
+ggplot(iris, aes(x=Sepal.Length, y=Species))+ # notice how x and y are swapped to set up a ggridges plot
+  geom_density_ridges(aes(color=Species,fill=Species), alpha=0.3)
+
+#what if we wanted to create a new column in the data fram for petal area?
+iris$Petal.Area = iris$Petal.Length * iris$Petal.Width
+View(iris)
+```
+
+
+> Q. What do the arguments color, fill, and alpha do? What is the difference between defining color within the aes() function and outside it?
+
+
+> Q. Now create another ridge plot that compares another variable across the three species
+
+
+Finally, a great way to visualize relationships between many variables all at once is to create a big scatterplot matrix. You can do this easily by using a function from the "car" package.
+
+```{r}
+
+scatterplotMatrix(~ Sepal.Length + Sepal.Width + Petal.Length | Species, data=iris)
+# Look at how this function is created: we specified the variables of interest on the left hand side, and then specified a grouping variable to color the points by species on the right hand side.
+
+```
+
+> Q. Look carefully at this scatterplot matrix. How would you describe the differences between the different flower species?
+
+# 4 Manipulating Datasets
+
+What if we want to get information about different categories of data within the same dataset?  Summarizing the whole dataset won't work, so we need a way to group the data by levels of a factor, for example.  That's where dplyr comes in!  The various functions within dplyr allow us to manipulate data easily. 
+```{r}
+#using the iris dataset
+#use the group_by and summarize function to find the mean and standard deviation of petal length for each species
+sum_iris <- iris %>% 
+  group_by(Species) %>%
+  summarize(mean.width=mean(Sepal.Length),sd.width=sd(Sepal.Length))
+
+#try this for Sepal Length!
+##prints out value in third row, second column 
+iris[3,2]
+
+#Take mean from rows 1-3, in the second column
+mean(iris[1:3, 2])
+
+#Change value 
+iris[5,4] <- 5
+head(iris)
+```
+```{r}
+#what about merging two datasets?
+
+temperature <- read.csv("Site_Temps.csv")
+names(temperature)[1] = "Site"
+windspeed <- read.csv("Site_Windspeed.csv")
+names(windspeed)[1] = "Site"
+
+head(temperature)
+str(temperature)
+
+head(windspeed)
+str(windspeed)
+#use the merge function to join by the common column name
+new_data <- merge(temperature,windspeed, by="Site")
+new_data
+
+```
+```{r}
+#what if we want to convert temperatures to celsius
+#one way to do this is using the lapply function
+#make a function to convert celsius to fahrenheight
+celsius_to_fahrenheit <- function(temp_C) {
+  temp_F <- (temp_C * 9 / 5) + 32
+  return(temp_F)
+}
+
+#use lapply to convert each row in the column
+## hasn not actually changed the values in the dataset 
+lapply(new_data$Temperature, celsius_to_fahrenheit)
+
+#or if we want to change the actual values within the dataframe:
+new_data$Temperature <- celsius_to_fahrenheit(new_data$Temperature)
+
+```
